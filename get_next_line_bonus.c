@@ -3,58 +3,58 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ykoh <ykoh@student.42seoul.kr>             +#+  +:+       +#+        */
+/*   By: jinspark <jinspark@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2020/05/22 22:01:51 by ykoh              #+#    #+#             */
-/*   Updated: 2020/06/05 15:12:13 by ykoh             ###   ########.fr       */
+/*   Created: 2021/03/20 02:28:25 by jinspark          #+#    #+#             */
+/*   Updated: 2021/03/20 02:30:20 by jinspark         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line_bonus.h"
 
-static int	ft_nl(char **line, char **tmpline, char **buf)
+static int	ft_next_line(char **line, char **backup, char **buf)
 {
-	const char	*tmp = *tmpline;
-	const char	*nl = ft_strchr(*tmpline, '\n');
+	const char	*temp = *backup;
+	const char	*next = ft_strchr(*backup, '\n');
 
-	if (nl)
+	if (next)
 	{
-		*line = ft_strndup(tmp, nl - tmp);
-		*tmpline = ft_strndup(nl + 1, BUFFER_SIZE);
-		free((void *)tmp);
+		*line = ft_strndup(temp, next - temp);
+		*backup = ft_strndup(next + 1, BUFFER_SIZE);
+		free((void *)temp);
 		free(*buf);
 		return (1);
 	}
-	*line = (*tmpline) ? *tmpline : ft_strndup("", 1);
-	*tmpline = NULL;
+	*line = (*backup) ? *backup : ft_strndup("", 1);
+	*backup = NULL;
 	free(*buf);
 	return (0);
 }
 
 int			get_next_line(int fd, char **line)
 {
-	static char	*tmpline[OPEN_MAX];
+	static char	*backup[OPEN_MAX];
+	ssize_t		count;
 	char		*buf;
-	char		*nl;
-	char		*tmp;
-	ssize_t		readcnt;
+	char		*next;
+	char		*temp;
 
-	if (!line || BUFFER_SIZE <= 0 ||
-		!(buf = malloc((BUFFER_SIZE + 1) * sizeof(char))))
+	if (
+		!(buf = malloc((BUFFER_SIZE + 1) * sizeof(char))) || !line || BUFFER_SIZE <= 0)
 		return (-1);
-	while ((!(nl = ft_strchr(tmpline[fd], '\n')) &&
-			(readcnt = read(fd, buf, BUFFER_SIZE)) != 0))
+	while ((!(next = ft_strchr(backup[fd], '\n')) &&
+			(count = read(fd, buf, BUFFER_SIZE)) != 0))
 	{
-		if (readcnt == -1)
+		if (count == -1)
 		{
 			free(buf);
 			return (-1);
 		}
-		buf[readcnt] = '\0';
-		tmp = (tmpline[fd]) ? ft_strjoin(tmpline[fd], buf) :
-								ft_strndup(buf, readcnt);
-		free(tmpline[fd]);
-		tmpline[fd] = tmp;
+		buf[count] = '\0';
+		temp = (backup[fd]) ? ft_strjoin(backup[fd], buf) :
+								ft_strndup(buf, count);
+		free(backup[fd]);
+		backup[fd] = temp;
 	}
-	return (ft_nl(line, &tmpline[fd], &buf));
+	return (ft_next_line(line, &backup[fd], &buf));
 }
